@@ -5,6 +5,7 @@ description = "A Python package to parse iTunes backups"
 authors = ["shyvn <shyvnx@gmail.com>"]
 license = "MIT"
 readme = "README.md"
+homepage = "https://github.com/shyvn/ibackupy"
 
 [tool.poetry.dependencies]
 python = "^3.8"
