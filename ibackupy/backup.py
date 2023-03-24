@@ -125,17 +125,29 @@ class Backup:
 
         logger.debug(f"Device backup path {self.backup_path}")
 
-        manifest_file = self.backup_path.joinpath("Manifest.plist")
-        logger.debug(f"Loading manifest from {manifest_file}")
-        self.manifest = plistlib.loads(manifest_file.read_bytes())
+        try:
+            manifest_file = self.backup_path.joinpath("Manifest.plist")
+            logger.debug(f"Loading manifest from {manifest_file}")
+            self.manifest = plistlib.loads(manifest_file.read_bytes())
+        except Exception as err:
+            logger.warning("Failed to load Manifest.plist: ", err)
+            self.manifest = {}
 
-        info_file = self.backup_path.joinpath("Info.plist")
-        logger.debug(f"Loading info from {info_file}")
-        self.info = plistlib.loads(info_file.read_bytes())
+        try:
+            info_file = self.backup_path.joinpath("Info.plist")
+            logger.debug(f"Loading info from {info_file}")
+            self.info = plistlib.loads(info_file.read_bytes())
+        except Exception as err:
+            logger.warning("Failed to load Info.plist: ", err)
+            self.info = {}
 
-        status_file = self.backup_path.joinpath("Status.plist")
-        logger.debug(f"Loading status from {status_file}")
-        self.status = plistlib.loads(status_file.read_bytes())
+        try:
+            status_file = self.backup_path.joinpath("Status.plist")
+            logger.debug(f"Loading status from {status_file}")
+            self.status = plistlib.loads(status_file.read_bytes())
+        except Exception as err:
+            logger.warning("Failed to load Status.plist: ", err)
+            self.status = {}
 
         self.apps = self._get_apps()
 
@@ -144,12 +156,13 @@ class Backup:
         return device
 
     def _get_apps(self) -> dict:
-        app_list = self.info["Installed Applications"]
-        app_info = self.manifest["Applications"]
-        apps = {app: app_info[app] for app in app_list}
+        app_list = self.info.get("Installed Applications", [])
+        app_info = self.manifest.get("Applications", {})
+        apps = {app: app_info.get(app, {}) for app in app_list}
         return apps
 
-    def _get_app_domain(self, app: str) -> str:
+    @staticmethod
+    def _get_app_domain(app: str) -> str:
         return f"AppDomain-{app}" if app else ""
 
     def _parse_file_path(self, id: str) -> Path:
@@ -158,7 +171,8 @@ class Backup:
         assert file_path.is_file(), "File not found!"
         return file_path
 
-    def _parse_file_info(self, file_blob: bytes) -> dict:
+    @staticmethod
+    def _parse_file_info(file_blob: bytes) -> dict:
         """Read `file` field in Manifest.db"""
         info = plistlib.loads(file_blob)
         return info
