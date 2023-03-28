@@ -20,8 +20,9 @@ logger = logging.getLogger(__name__)
 
 class Backup:
 
-    def __init__(self, path: str = "") -> None:
+    def __init__(self, path: str = "", udid: str = "") -> None:
         self.set_backup_dir(path)
+        self.set_device(udid)
 
     @staticmethod
     def _get_default_backup_dir() -> Path:
@@ -70,6 +71,7 @@ class Backup:
 
     def _get_device_info(self, udid: str) -> dict:
         logger.debug(f"Try reading device info of {udid}")
+        device_info = {}
         manifest_file = self.backup_dir.joinpath(udid, "Manifest.plist")
         try:
             manifest = plistlib.loads(manifest_file.read_bytes())
@@ -85,10 +87,8 @@ class Backup:
             }
         except FileNotFoundError:
             logger.warning("Manifest.plist not found")
-            device_info = {}
         except Exception as err:
             logger.error(err)
-            device_info = {}
 
         return device_info
 
@@ -101,53 +101,52 @@ class Backup:
         List of device dict with udid, date and other info
         """
         devices = [
-            self._get_device_info(path.stem)
+            self._get_device_info(path.name)
             for path in self.backup_dir.iterdir()
-            if path.is_dir()
+            if path.is_dir() and len(path.name) in [25, 40]
         ]
         return devices
+    
+    def _load_plist_file(self, file):
+        plist = {}
+        try:
+            logger.debug(f"Loading manifest from {file}")
+            fpath = self.backup_path.joinpath(file)
+            plist= plistlib.loads(fpath.read_bytes())
+        except FileNotFoundError:
+            logger.warning(f"{file} not found")
+        except Exception as err:
+            logger.warning(f"Failed to load {file}: ", err)
+        return plist
 
-    def set_device(self, udid: str = "") -> dict:
+    def set_device(self, udid: str) -> dict:
         """
         Set most recent backuped device if not specified
         """
-        if not udid:
-            devices = self.get_device_list()
-            devices_sorted = sorted(
-                devices, key=lambda d: d["date"])
-            device = devices_sorted[-1]
-            udid = device["udid"]
+        devices, device = self.get_device_list(), {}
+        udids = [d["udid"] for d in devices]
+        if not udid or udid not in udids:
+            if len(devices) < 1:
+                logger.error("No device found")
+            elif len(devices) == 1:
+                logger.info("Set device with only one found")
+                device = devices[0]
+            else:
+                logger.info("Set the latest device")
+                devices_sorted = sorted(
+                    devices, key=lambda d: d["date"])
+                device = devices_sorted[-1]
         else:
-            device = self._get_device_info(udid)
-
-        self.udid = udid
+            device = devices[udids.index(udid)]
+        
+        udid = device.get("udid", "")
         self.backup_path = self.backup_dir.joinpath(udid)
 
         logger.debug(f"Device backup path {self.backup_path}")
 
-        try:
-            manifest_file = self.backup_path.joinpath("Manifest.plist")
-            logger.debug(f"Loading manifest from {manifest_file}")
-            self.manifest = plistlib.loads(manifest_file.read_bytes())
-        except Exception as err:
-            logger.warning("Failed to load Manifest.plist: ", err)
-            self.manifest = {}
-
-        try:
-            info_file = self.backup_path.joinpath("Info.plist")
-            logger.debug(f"Loading info from {info_file}")
-            self.info = plistlib.loads(info_file.read_bytes())
-        except Exception as err:
-            logger.warning("Failed to load Info.plist: ", err)
-            self.info = {}
-
-        try:
-            status_file = self.backup_path.joinpath("Status.plist")
-            logger.debug(f"Loading status from {status_file}")
-            self.status = plistlib.loads(status_file.read_bytes())
-        except Exception as err:
-            logger.warning("Failed to load Status.plist: ", err)
-            self.status = {}
+        self.manifest = self._load_plist_file("Manifest.plist")
+        self.info = self._load_plist_file("Info.plist")
+        self.status = self._load_plist_file("Status.plist")
 
         self.apps = self._get_apps()
 
@@ -156,9 +155,13 @@ class Backup:
         return device
 
     def _get_apps(self) -> dict:
-        app_list = self.info.get("Installed Applications", [])
-        app_info = self.manifest.get("Applications", {})
-        apps = {app: app_info.get(app, {}) for app in app_list}
+        try:
+            app_list = self.info.get("Installed Applications", [])
+            app_info = self.manifest.get("Applications", {})
+            apps = {app: app_info.get(app, {}) for app in app_list}
+        except Exception as err:
+            logger.warning("Failed to get app list", err)
+            apps = {}
         return apps
 
     @staticmethod
