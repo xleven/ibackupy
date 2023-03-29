@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "ibackupy"
-version = "0.1.0"
+version = "0.1.1"
 description = "A Python package to parse iTunes backups"
 authors = ["shyvn <shyvnx@gmail.com>"]
 license = "MIT"
