@@ -41,7 +41,7 @@ def get_app_list(manifest):
 st.title("iBackupy")
 
 st.markdown("""
-    This is a demo of [iBackupy](https://github.com/shyvn/ibackupy)
+    This is a demo of [iBackupy](https://github.com/xleven/ibackupy)
     powered by [Streamlit](https://streamlit.io)
 
     It's recommended to run it locally while link above provided a online version

@@ -3,7 +3,7 @@
 """
 iBackupy is a Python tool to parse iTunes backups.
 
-Copyright (c) 2023 Shyvn
+Copyright (c) 2023 xleven
 """
 
 import logging

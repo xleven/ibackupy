@@ -2,10 +2,10 @@
 name = "ibackupy"
 version = "0.1.1"
 description = "A Python package to parse iTunes backups"
-authors = ["shyvn <shyvnx@gmail.com>"]
+authors = ["xleven <xleven@outlook.com>"]
 license = "MIT"
 readme = "README.md"
-homepage = "https://github.com/shyvn/ibackupy"
+homepage = "https://github.com/xleven/ibackupy"
 
 [tool.poetry.dependencies]
 python = "^3.8"
