@@ -1,4 +1,4 @@
-[![Streamlit App](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://ibackupy.streamlitapp.com)
+[![Streamlit App](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://ibackupy-demo.streamlit.app)
 
 This is a demo of [iBackupy](https://github.com/xleven/ibackupy) powered by [Streamlit](https://streamlit.io)
 
